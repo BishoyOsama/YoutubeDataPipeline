@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 table = "yt_api"
 
 
-def insert_data(cursor, connection, schema, row):
+def insert_rows(cursor, connection, schema, row):
     try:
 
         if schema == "staging":
