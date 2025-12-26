@@ -67,11 +67,9 @@ def create_table_if_not_exists(schema):
 
 def get_video_ids_from_db(cursor, schema):
     """Fetches and returns all Video_IDs from the yt_api table in the specified schema."""
-    connection, cursor = get_postgres_connection()
     fetch_query = f'SELECT "Video_ID" FROM {schema}.{table};'
     cursor.execute(fetch_query)
     results = cursor.fetchall()
     video_ids = [row["Video_ID"] for row in results]
-    close_postgres_connection(connection, cursor)
     return video_ids
         
