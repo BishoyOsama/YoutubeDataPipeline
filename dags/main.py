@@ -8,6 +8,10 @@ from api.videos_data import (
     extract_video_details,
     save_to_json
 )
+from datawarehouse.dwh_init import populate_staging_table, populate_core_table
+
+from dataquality.soda import elt_data_quality_check
+
 
 # Define the local timezone
 local_tz = pendulum.timezone("Africa/Cairo")
@@ -40,3 +44,34 @@ with DAG(
 
     # Explicit dependency graph (optional; TaskFlow already orders them)
     playlist_id >> video_ids >> extract_data >> save_to_json_task
+
+
+with DAG(
+    dag_id="update_datawarehouse",
+    default_args=default_args,
+    description="DAG to process json file and insert data into both staging and core schemas",
+    schedule_interval="0 15 * * *",  # cron at 14:00 daily
+    catchup=False,
+    max_active_runs=1,              # DAG-level setting
+    dagrun_timeout=timedelta(hours=1),
+    start_date=datetime(2025, 12, 25, tzinfo=local_tz),  # <- in the past relative to 2025-12-25
+) as dag_update:
+
+    update_staging = populate_staging_table()
+    update_core = populate_core_table()
+
+    update_staging >> update_core
+
+
+with DAG(
+    dag_id="data_quality_checks",
+    default_args=default_args,
+    description="DAG to perform data quality checks using Soda postgres",
+    catchup=False,
+    schedule=None,
+) as dag_quality:
+    
+    staging_quality_check = elt_data_quality_check("staging")
+    core_quality_check = elt_data_quality_check("core")
+
+    staging_quality_check >> core_quality_check

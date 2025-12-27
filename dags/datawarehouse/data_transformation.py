@@ -5,7 +5,7 @@ def parse_duration(duration_str):
     try:
         duration_str = duration_str.replace("P", "").replace("T", "")
 
-        hours = minutes = seconds = 0
+        days = hours = minutes = seconds = 0
 
         if "D" in duration_str:
             days_part, duration_str = duration_str.split("D", 1) 
@@ -20,7 +20,7 @@ def parse_duration(duration_str):
             minutes = int(minutes_part)
 
         if "S" in duration_str:
-            seconds_part = duration_str.rstrip("S")
+            seconds_part, duration_str = duration_str.split("S", 1)
             seconds = int(seconds_part)
 
         return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)

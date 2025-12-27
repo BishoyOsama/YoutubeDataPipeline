@@ -22,8 +22,8 @@ def insert_rows(cursor, connection, schema, row):
             
             cursor.execute(insert_query, row)
 
-            connection.commit()
-            logger.info(f"Inserted video ID {row[video_id]} into {schema}.{table} successfully.")
+        connection.commit()
+        logger.info(f"Inserted video ID {row[video_id]} into {schema}.{table} successfully.")
 
     except Exception as e:
         logger.error(f"Error inserting video ID {row[video_id]} into {schema}.{table}: {e}")

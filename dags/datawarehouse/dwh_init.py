@@ -27,7 +27,7 @@ def populate_staging_table():
     connection, cursor = None, None
 
     try:
-        connection, cursor = get_postgres_connection
+        connection, cursor = get_postgres_connection()
         YT_data = load_data()
 
         create_schema_if_not_exists(schema)
@@ -50,7 +50,7 @@ def populate_staging_table():
 
         if ids_to_delete:
             delete_rows(cursor, connection, schema, ids_to_delete)
-
+        
         logger.info("Staging table population completed successfully.")
 
     except Exception as e:
@@ -98,6 +98,7 @@ def populate_core_table():
 
         if ids_to_delete:
             delete_rows(cursor, connection, schema, ids_to_delete)
+            
         logger.info(f"{schema} table population completed successfully.")
 
     except Exception as e:
