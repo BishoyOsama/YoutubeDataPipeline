@@ -1,6 +1,7 @@
 from airflow import DAG
 import pendulum
 from datetime import datetime, timedelta
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 from api.videos_data import (
     get_playlist_id,
@@ -42,15 +43,20 @@ with DAG(
     extract_data = extract_video_details(video_ids)
     save_to_json_task = save_to_json(extract_data)
 
-    # Explicit dependency graph (optional; TaskFlow already orders them)
-    playlist_id >> video_ids >> extract_data >> save_to_json_task
+
+    trigger_update_datawarehouse = TriggerDagRunOperator(
+        task_id="trigger_update_datawarehouse_dag",
+        trigger_dag_id="update_datawarehouse"
+    )
+    # Explicit dependency graph)
+    playlist_id >> video_ids >> extract_data >> save_to_json_task >> trigger_update_datawarehouse
 
 
 with DAG(
     dag_id="update_datawarehouse",
     default_args=default_args,
     description="DAG to process json file and insert data into both staging and core schemas",
-    schedule_interval="0 15 * * *",  # cron at 14:00 daily
+    schedule_interval=None,  # cron at 14:00 daily
     catchup=False,
     max_active_runs=1,              # DAG-level setting
     dagrun_timeout=timedelta(hours=1),
@@ -60,7 +66,12 @@ with DAG(
     update_staging = populate_staging_table()
     update_core = populate_core_table()
 
-    update_staging >> update_core
+    trigger_data_quality_checks = TriggerDagRunOperator(
+        task_id="trigger_data_quality_checks_dag",
+        trigger_dag_id="data_quality_checks"
+    )
+
+    update_staging >> update_core >> trigger_data_quality_checks
 
 
 with DAG(
